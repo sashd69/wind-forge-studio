@@ -24,9 +24,12 @@ const RightSidebar: React.FC<RightSidebarProps> = ({ lift, drag }) => {
       return updated;
     });
 
-    // Calculate efficiency (lift/drag ratio)
-    const eff = drag > 0 ? (Math.abs(lift) / drag) * 100 : 100;
-    setEfficiency(Math.min(100, eff));
+    // Calculate efficiency (lift/drag ratio) - lower drag = better efficiency
+    // Efficiency decreases as drag increases, increases with positive lift
+    const dragPenalty = Math.min(drag, 100);
+    const liftBonus = Math.max(0, Math.abs(lift)) * 0.5;
+    const eff = Math.max(0, 100 - dragPenalty + liftBonus);
+    setEfficiency(Math.min(100, Math.max(0, eff)));
   }, [lift, drag]);
 
   const getLiftStatus = () => {
