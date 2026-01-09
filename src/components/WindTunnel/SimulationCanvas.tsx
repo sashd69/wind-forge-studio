@@ -379,47 +379,232 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({
     const canvas = obstacleCanvasRef.current;
     if (!canvas) return;
     
+    const drawWithTransform = (
+      ctx: CanvasRenderingContext2D,
+      drawFn: () => void,
+      rotation: { x: number; y: number; z: number }
+    ) => {
+      ctx.clearRect(0, 0, dimensions.width, dimensions.height);
+      ctx.save();
+      ctx.translate(dimensions.width * 0.4, dimensions.height * 0.5);
+      
+      // Z-axis rotation
+      ctx.rotate((rotation.z * Math.PI) / 180);
+      
+      // X-axis flip (vertical flip simulation)
+      if (rotation.x !== 0) ctx.scale(1, rotation.x > 0 ? -1 : 1);
+      
+      // Y-axis flip (horizontal flip simulation)
+      if (rotation.y !== 0) ctx.scale(rotation.y > 0 ? -1 : 1, 1);
+      
+      ctx.translate(-dimensions.width * 0.4, -dimensions.height * 0.5);
+      drawFn();
+      ctx.restore();
+    };
+
     (window as any).windTunnelCanvas = {
       clear: () => {
         const ctx = canvas.getContext('2d');
         if (ctx) ctx.clearRect(0, 0, dimensions.width, dimensions.height);
       },
-      drawAirfoil: () => {
+      drawAirfoil: (rotation = { x: 0, y: 0, z: 0 }) => {
         const ctx = canvas.getContext('2d');
         if (ctx) {
-          ctx.clearRect(0, 0, dimensions.width, dimensions.height);
-          drawAirfoil(ctx, dimensions.width, dimensions.height);
+          drawWithTransform(ctx, () => drawAirfoil(ctx, dimensions.width, dimensions.height), rotation);
         }
       },
-      drawCircle: () => {
+      drawCircle: (rotation = { x: 0, y: 0, z: 0 }) => {
         const ctx = canvas.getContext('2d');
         if (ctx) {
-          ctx.clearRect(0, 0, dimensions.width, dimensions.height);
-          ctx.fillStyle = '#ffffff';
-          ctx.beginPath();
-          ctx.arc(dimensions.width * 0.4, dimensions.height * 0.5, 60, 0, Math.PI * 2);
-          ctx.fill();
+          drawWithTransform(ctx, () => {
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(dimensions.width * 0.4, dimensions.height * 0.5, 60, 0, Math.PI * 2);
+            ctx.fill();
+          }, rotation);
         }
       },
-      drawSquare: () => {
+      drawSquare: (rotation = { x: 0, y: 0, z: 0 }) => {
         const ctx = canvas.getContext('2d');
         if (ctx) {
-          ctx.clearRect(0, 0, dimensions.width, dimensions.height);
-          ctx.fillStyle = '#ffffff';
-          ctx.fillRect(dimensions.width * 0.35, dimensions.height * 0.4, 100, 100);
+          drawWithTransform(ctx, () => {
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(dimensions.width * 0.35, dimensions.height * 0.4, 100, 100);
+          }, rotation);
         }
       },
-      drawSpoiler: () => {
+      drawSpoiler: (rotation = { x: 0, y: 0, z: 0 }) => {
         const ctx = canvas.getContext('2d');
         if (ctx) {
-          ctx.clearRect(0, 0, dimensions.width, dimensions.height);
-          ctx.fillStyle = '#ffffff';
-          ctx.beginPath();
-          ctx.moveTo(dimensions.width * 0.35, dimensions.height * 0.55);
-          ctx.lineTo(dimensions.width * 0.5, dimensions.height * 0.35);
-          ctx.lineTo(dimensions.width * 0.52, dimensions.height * 0.55);
-          ctx.closePath();
-          ctx.fill();
+          drawWithTransform(ctx, () => {
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.moveTo(dimensions.width * 0.35, dimensions.height * 0.55);
+            ctx.lineTo(dimensions.width * 0.5, dimensions.height * 0.35);
+            ctx.lineTo(dimensions.width * 0.52, dimensions.height * 0.55);
+            ctx.closePath();
+            ctx.fill();
+          }, rotation);
+        }
+      },
+      drawCar: (rotation = { x: 0, y: 0, z: 0 }) => {
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          drawWithTransform(ctx, () => {
+            const cx = dimensions.width * 0.4;
+            const cy = dimensions.height * 0.5;
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            // Car body (sedan profile)
+            ctx.moveTo(cx - 80, cy + 20);
+            ctx.lineTo(cx - 70, cy + 20);
+            ctx.quadraticCurveTo(cx - 65, cy - 5, cx - 40, cy - 15);
+            ctx.lineTo(cx - 10, cy - 25);
+            ctx.quadraticCurveTo(cx + 10, cy - 30, cx + 30, cy - 25);
+            ctx.lineTo(cx + 50, cy - 15);
+            ctx.quadraticCurveTo(cx + 70, cy - 5, cx + 80, cy + 20);
+            ctx.lineTo(cx + 80, cy + 25);
+            ctx.lineTo(cx - 80, cy + 25);
+            ctx.closePath();
+            ctx.fill();
+            // Wheels
+            ctx.beginPath();
+            ctx.arc(cx - 45, cy + 25, 12, 0, Math.PI * 2);
+            ctx.arc(cx + 45, cy + 25, 12, 0, Math.PI * 2);
+            ctx.fill();
+          }, rotation);
+        }
+      },
+      drawBike: (rotation = { x: 0, y: 0, z: 0 }) => {
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          drawWithTransform(ctx, () => {
+            const cx = dimensions.width * 0.4;
+            const cy = dimensions.height * 0.5;
+            ctx.fillStyle = '#ffffff';
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 6;
+            // Frame
+            ctx.beginPath();
+            ctx.moveTo(cx - 50, cy + 15);
+            ctx.lineTo(cx - 20, cy - 25);
+            ctx.lineTo(cx + 20, cy - 25);
+            ctx.lineTo(cx + 40, cy + 15);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(cx - 20, cy - 25);
+            ctx.lineTo(cx + 10, cy + 15);
+            ctx.stroke();
+            // Wheels
+            ctx.beginPath();
+            ctx.arc(cx - 50, cy + 15, 20, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(cx + 40, cy + 15, 20, 0, Math.PI * 2);
+            ctx.stroke();
+            // Rider silhouette
+            ctx.beginPath();
+            ctx.arc(cx, cy - 45, 10, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(cx, cy - 35);
+            ctx.lineTo(cx - 5, cy - 10);
+            ctx.lineTo(cx + 10, cy + 15);
+            ctx.stroke();
+          }, rotation);
+        }
+      },
+      drawAirplane: (rotation = { x: 0, y: 0, z: 0 }) => {
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          drawWithTransform(ctx, () => {
+            const cx = dimensions.width * 0.4;
+            const cy = dimensions.height * 0.5;
+            ctx.fillStyle = '#ffffff';
+            // Fuselage
+            ctx.beginPath();
+            ctx.ellipse(cx, cy, 80, 15, 0, 0, Math.PI * 2);
+            ctx.fill();
+            // Nose cone
+            ctx.beginPath();
+            ctx.moveTo(cx + 80, cy);
+            ctx.quadraticCurveTo(cx + 110, cy, cx + 100, cy);
+            ctx.lineTo(cx + 80, cy - 10);
+            ctx.lineTo(cx + 80, cy + 10);
+            ctx.closePath();
+            ctx.fill();
+            // Main wings
+            ctx.beginPath();
+            ctx.moveTo(cx - 10, cy - 10);
+            ctx.lineTo(cx - 60, cy - 50);
+            ctx.lineTo(cx - 70, cy - 45);
+            ctx.lineTo(cx - 20, cy - 10);
+            ctx.closePath();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(cx - 10, cy + 10);
+            ctx.lineTo(cx - 60, cy + 50);
+            ctx.lineTo(cx - 70, cy + 45);
+            ctx.lineTo(cx - 20, cy + 10);
+            ctx.closePath();
+            ctx.fill();
+            // Tail wings
+            ctx.beginPath();
+            ctx.moveTo(cx - 70, cy - 10);
+            ctx.lineTo(cx - 85, cy - 30);
+            ctx.lineTo(cx - 80, cy - 10);
+            ctx.closePath();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(cx - 70, cy + 10);
+            ctx.lineTo(cx - 85, cy + 30);
+            ctx.lineTo(cx - 80, cy + 10);
+            ctx.closePath();
+            ctx.fill();
+            // Vertical stabilizer
+            ctx.beginPath();
+            ctx.moveTo(cx - 75, cy - 15);
+            ctx.lineTo(cx - 80, cy - 40);
+            ctx.lineTo(cx - 65, cy - 15);
+            ctx.closePath();
+            ctx.fill();
+          }, rotation);
+        }
+      },
+      drawF1Car: (rotation = { x: 0, y: 0, z: 0 }) => {
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          drawWithTransform(ctx, () => {
+            const cx = dimensions.width * 0.4;
+            const cy = dimensions.height * 0.5;
+            ctx.fillStyle = '#ffffff';
+            // Main body
+            ctx.beginPath();
+            ctx.moveTo(cx - 70, cy + 5);
+            ctx.lineTo(cx - 50, cy - 10);
+            ctx.lineTo(cx + 40, cy - 10);
+            ctx.lineTo(cx + 70, cy);
+            ctx.lineTo(cx + 70, cy + 10);
+            ctx.lineTo(cx - 70, cy + 10);
+            ctx.closePath();
+            ctx.fill();
+            // Front wing
+            ctx.fillRect(cx + 55, cy - 20, 20, 8);
+            ctx.fillRect(cx + 55, cy + 12, 20, 8);
+            // Rear wing
+            ctx.fillRect(cx - 75, cy - 25, 15, 6);
+            ctx.fillRect(cx - 75, cy + 19, 15, 6);
+            // Cockpit
+            ctx.beginPath();
+            ctx.arc(cx + 10, cy - 5, 15, Math.PI, 0);
+            ctx.fill();
+            // Wheels
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.ellipse(cx + 50, cy + 18, 12, 8, 0, 0, Math.PI * 2);
+            ctx.ellipse(cx - 40, cy + 18, 12, 8, 0, 0, Math.PI * 2);
+            ctx.fill();
+          }, rotation);
         }
       },
     };
