@@ -178,27 +178,53 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({
         p.trail.push({ x: p.x, y: p.y });
         if (p.trail.length > 15) p.trail.shift();
 
-        // Check collision
-        if (isObstacle(p.x, p.y)) {
-          const deflection = getDeflection(p.x, p.y, p.vx, p.vy);
-          p.vx = Math.max(0.5, p.vx + deflection.dvx);
-          p.vy += deflection.dvy;
-          collisionCount++;
-          totalDrag += Math.abs(p.vx);
-          totalLift += p.vy;
-          
-          // Move particle out of obstacle
-          p.x -= p.vx * 0.5;
-          p.y += deflection.dvy * 2;
+        // Predict next position
+        const nextX = p.x + p.vx;
+        const nextY = p.y + p.vy;
+
+        // Check collision at multiple points along path for accuracy
+        let collided = false;
+        for (let t = 0; t <= 1 && !collided; t += 0.25) {
+          const checkX = p.x + (nextX - p.x) * t;
+          const checkY = p.y + (nextY - p.y) * t;
+          if (isObstacle(checkX, checkY)) {
+            collided = true;
+            const deflection = getDeflection(checkX, checkY, p.vx, p.vy);
+            
+            // Push particle away from obstacle
+            let escapeX = checkX;
+            let escapeY = checkY;
+            const escapeDir = deflection.dvy < 0 ? -1 : 1;
+            
+            // Find clear position
+            for (let i = 1; i <= 20; i++) {
+              if (!isObstacle(escapeX - i, escapeY + escapeDir * i)) {
+                escapeX = escapeX - i;
+                escapeY = escapeY + escapeDir * i;
+                break;
+              }
+            }
+            
+            p.x = escapeX;
+            p.y = escapeY;
+            p.vx = Math.max(baseSpeed * 0.6, p.vx * 0.7);
+            p.vy = deflection.dvy * 0.8;
+            
+            collisionCount++;
+            totalDrag += 1;
+            totalLift += deflection.dvy;
+          }
         }
 
-        // Apply velocity
-        p.x += p.vx;
-        p.y += p.vy;
+        // Apply velocity only if no collision
+        if (!collided) {
+          p.x += p.vx;
+          p.y += p.vy;
+        }
         
         // Gradually return to base flow
         p.vx = p.vx * 0.99 + baseSpeed * 0.01;
-        p.vy *= 0.98;
+        p.vy *= 0.95;
 
         // Draw trail with glow
         if (p.trail.length > 1) {
