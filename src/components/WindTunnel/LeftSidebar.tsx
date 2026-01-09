@@ -1,9 +1,11 @@
-import React from 'react';
-import { Pencil, Eraser, Trash2, Wind, Sparkles, Play, Pause, ArrowRight, ArrowLeft, ArrowUp, ArrowDown } from 'lucide-react';
+import React, { useState } from 'react';
+import { Pencil, Eraser, Trash2, Wind, Sparkles, Play, Pause, ArrowRight, ArrowLeft, ArrowUp, ArrowDown, RotateCw, FlipHorizontal, FlipVertical, Car, Bike, Plane } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { type WindDirection } from './WindTunnelApp';
+
+type ShapePreset = 'airfoil' | 'circle' | 'square' | 'spoiler' | 'car' | 'bike' | 'airplane' | 'f1car';
 
 interface LeftSidebarProps {
   tool: 'pen' | 'eraser';
@@ -30,21 +32,48 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
   isRunning,
   setIsRunning,
 }) => {
-  const handlePreset = (preset: 'airfoil' | 'circle' | 'square' | 'spoiler') => {
+  const [rotation, setRotation] = useState({ x: 0, y: 0, z: 0 });
+  const [currentShape, setCurrentShape] = useState<ShapePreset | null>(null);
+
+  const applyShape = (preset: ShapePreset, rot: { x: number; y: number; z: number }) => {
     const canvas = (window as any).windTunnelCanvas;
     if (!canvas) return;
     
     switch (preset) {
-      case 'airfoil': canvas.drawAirfoil(); break;
-      case 'circle': canvas.drawCircle(); break;
-      case 'square': canvas.drawSquare(); break;
-      case 'spoiler': canvas.drawSpoiler(); break;
+      case 'airfoil': canvas.drawAirfoil(rot); break;
+      case 'circle': canvas.drawCircle(rot); break;
+      case 'square': canvas.drawSquare(rot); break;
+      case 'spoiler': canvas.drawSpoiler(rot); break;
+      case 'car': canvas.drawCar(rot); break;
+      case 'bike': canvas.drawBike(rot); break;
+      case 'airplane': canvas.drawAirplane(rot); break;
+      case 'f1car': canvas.drawF1Car(rot); break;
     }
+  };
+
+  const handlePreset = (preset: ShapePreset) => {
+    setCurrentShape(preset);
+    setRotation({ x: 0, y: 0, z: 0 });
+    applyShape(preset, { x: 0, y: 0, z: 0 });
+  };
+
+  const handleRotation = (axis: 'x' | 'y' | 'z', delta: number) => {
+    if (!currentShape) return;
+    const newRotation = { ...rotation };
+    if (axis === 'z') {
+      newRotation.z = (newRotation.z + delta) % 360;
+    } else {
+      newRotation[axis] = newRotation[axis] === 0 ? 180 : 0;
+    }
+    setRotation(newRotation);
+    applyShape(currentShape, newRotation);
   };
 
   const handleClear = () => {
     const canvas = (window as any).windTunnelCanvas;
     if (canvas) canvas.clear();
+    setCurrentShape(null);
+    setRotation({ x: 0, y: 0, z: 0 });
   };
 
   const directionOptions: { value: WindDirection; icon: React.ReactNode; label: string }[] = [
@@ -163,17 +192,17 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
         </div>
       </div>
 
-      {/* Shape Presets */}
+      {/* Shape Presets - Basic */}
       <div className="sidebar-section">
-        <span className="control-label">Shape Presets</span>
+        <span className="control-label">Basic Shapes</span>
         <div className="grid grid-cols-2 gap-2">
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
-                variant="outline"
+                variant={currentShape === 'airfoil' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => handlePreset('airfoil')}
-                className="text-xs"
+                className={`text-xs ${currentShape === 'airfoil' ? 'glow-cyan' : ''}`}
               >
                 Airfoil
               </Button>
@@ -186,10 +215,10 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
-                variant="outline"
+                variant={currentShape === 'circle' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => handlePreset('circle')}
-                className="text-xs"
+                className={`text-xs ${currentShape === 'circle' ? 'glow-cyan' : ''}`}
               >
                 Circle
               </Button>
@@ -202,10 +231,10 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
-                variant="outline"
+                variant={currentShape === 'square' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => handlePreset('square')}
-                className="text-xs"
+                className={`text-xs ${currentShape === 'square' ? 'glow-cyan' : ''}`}
               >
                 Square
               </Button>
@@ -218,10 +247,10 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
-                variant="outline"
+                variant={currentShape === 'spoiler' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => handlePreset('spoiler')}
-                className="text-xs"
+                className={`text-xs ${currentShape === 'spoiler' ? 'glow-cyan' : ''}`}
               >
                 Spoiler
               </Button>
@@ -232,6 +261,138 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
           </Tooltip>
         </div>
       </div>
+
+      {/* Real World Presets */}
+      <div className="sidebar-section">
+        <span className="control-label">Real World Shapes</span>
+        <div className="grid grid-cols-2 gap-2">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={currentShape === 'car' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => handlePreset('car')}
+                className={`text-xs ${currentShape === 'car' ? 'glow-cyan' : ''}`}
+              >
+                <Car className="w-3 h-3 mr-1" />
+                Sedan
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Standard sedan car profile</p>
+            </TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={currentShape === 'f1car' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => handlePreset('f1car')}
+                className={`text-xs ${currentShape === 'f1car' ? 'glow-cyan' : ''}`}
+              >
+                <Car className="w-3 h-3 mr-1" />
+                F1 Car
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Formula 1 racing car - optimized aerodynamics</p>
+            </TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={currentShape === 'bike' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => handlePreset('bike')}
+                className={`text-xs ${currentShape === 'bike' ? 'glow-cyan' : ''}`}
+              >
+                <Bike className="w-3 h-3 mr-1" />
+                Bike
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Cyclist on bicycle - study rider position</p>
+            </TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={currentShape === 'airplane' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => handlePreset('airplane')}
+                className={`text-xs ${currentShape === 'airplane' ? 'glow-cyan' : ''}`}
+              >
+                <Plane className="w-3 h-3 mr-1" />
+                Airplane
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Commercial airplane - top-down view</p>
+            </TooltipContent>
+          </Tooltip>
+        </div>
+      </div>
+
+      {/* Rotation Controls */}
+      {currentShape && (
+        <div className="sidebar-section">
+          <span className="control-label">Rotate / Flip Shape</span>
+          <div className="flex gap-2">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => handleRotation('z', 45)}
+                >
+                  <RotateCw className="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Rotate 45° (Z-axis)</p>
+              </TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant={rotation.y !== 0 ? 'default' : 'outline'}
+                  size="icon"
+                  onClick={() => handleRotation('y', 180)}
+                  className={rotation.y !== 0 ? 'glow-cyan' : ''}
+                >
+                  <FlipHorizontal className="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Flip Horizontal (Y-axis)</p>
+              </TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant={rotation.x !== 0 ? 'default' : 'outline'}
+                  size="icon"
+                  onClick={() => handleRotation('x', 180)}
+                  className={rotation.x !== 0 ? 'glow-cyan' : ''}
+                >
+                  <FlipVertical className="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Flip Vertical (X-axis)</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
+          <div className="text-xs text-muted-foreground mt-2 font-mono">
+            Z: {rotation.z}° | Flip X: {rotation.x !== 0 ? 'Yes' : 'No'} | Flip Y: {rotation.y !== 0 ? 'Yes' : 'No'}
+          </div>
+        </div>
+      )}
 
       {/* Environment Controls */}
       <div className="sidebar-section">
