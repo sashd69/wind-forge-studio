@@ -339,13 +339,7 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({
 
   return (
     <div ref={containerRef} className="relative w-full h-full overflow-hidden bg-background">
-      {/* Obstacle canvas (visible shape) */}
-      <canvas
-        ref={obstacleCanvasRef}
-        className="absolute inset-0 pointer-events-none"
-        style={{ mixBlendMode: 'screen', opacity: 1 }}
-      />
-      {/* Particle canvas */}
+      {/* Particle canvas (bottom layer) */}
       <canvas
         ref={canvasRef}
         className="absolute inset-0 cursor-crosshair"
@@ -353,6 +347,12 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
+      />
+      {/* Obstacle canvas (top layer - visible shape) */}
+      <canvas
+        ref={obstacleCanvasRef}
+        className="absolute inset-0 pointer-events-none z-10"
+        style={{ opacity: 1 }}
       />
       {/* Grid overlay */}
       <div 
