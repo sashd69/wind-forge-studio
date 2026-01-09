@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useCallback, useState } from 'react';
+import { type WindDirection } from './WindTunnelApp';
 
 interface Particle {
   x: number;
@@ -14,6 +15,8 @@ interface SimulationCanvasProps {
   particleCount: number;
   tool: 'pen' | 'eraser';
   onMetricsUpdate: (lift: number, drag: number) => void;
+  windDirection: WindDirection;
+  isRunning: boolean;
 }
 
 const SimulationCanvas: React.FC<SimulationCanvasProps> = ({
@@ -21,6 +24,8 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({
   particleCount,
   tool,
   onMetricsUpdate,
+  windDirection,
+  isRunning,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const obstacleCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -134,6 +139,55 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({
     };
   }, [isObstacle]);
 
+  // Get velocity based on wind direction
+  const getDirectionalVelocity = useCallback((baseSpeed: number): { vx: number; vy: number } => {
+    switch (windDirection) {
+      case 'left-right':
+        return { vx: baseSpeed + Math.random() * 0.5, vy: (Math.random() - 0.5) * 0.5 };
+      case 'right-left':
+        return { vx: -(baseSpeed + Math.random() * 0.5), vy: (Math.random() - 0.5) * 0.5 };
+      case 'top-bottom':
+        return { vx: (Math.random() - 0.5) * 0.5, vy: baseSpeed + Math.random() * 0.5 };
+      case 'bottom-top':
+        return { vx: (Math.random() - 0.5) * 0.5, vy: -(baseSpeed + Math.random() * 0.5) };
+      default:
+        return { vx: baseSpeed + Math.random() * 0.5, vy: (Math.random() - 0.5) * 0.5 };
+    }
+  }, [windDirection]);
+
+  // Get spawn position based on wind direction
+  const getSpawnPosition = useCallback((width: number, height: number): { x: number; y: number } => {
+    switch (windDirection) {
+      case 'left-right':
+        return { x: 0, y: Math.random() * height };
+      case 'right-left':
+        return { x: width, y: Math.random() * height };
+      case 'top-bottom':
+        return { x: Math.random() * width, y: 0 };
+      case 'bottom-top':
+        return { x: Math.random() * width, y: height };
+      default:
+        return { x: 0, y: Math.random() * height };
+    }
+  }, [windDirection]);
+
+  // Check if particle is out of bounds
+  const isOutOfBounds = useCallback((p: Particle, width: number, height: number): boolean => {
+    const margin = 10;
+    switch (windDirection) {
+      case 'left-right':
+        return p.x > width + margin;
+      case 'right-left':
+        return p.x < -margin;
+      case 'top-bottom':
+        return p.y > height + margin;
+      case 'bottom-top':
+        return p.y < -margin;
+      default:
+        return p.x > width + margin || p.y < -margin || p.y > height + margin;
+    }
+  }, [windDirection]);
+
   // Animation loop
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -153,16 +207,23 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({
     let collisionCount = 0;
 
     const animate = () => {
+      if (!isRunning) {
+        animationRef.current = requestAnimationFrame(animate);
+        return;
+      }
+
       ctx.fillStyle = 'rgba(2, 6, 23, 0.15)';
       ctx.fillRect(0, 0, dimensions.width, dimensions.height);
 
       // Spawn particles
       while (particlesRef.current.length < targetParticles) {
+        const spawnPos = getSpawnPosition(dimensions.width, dimensions.height);
+        const velocity = getDirectionalVelocity(baseSpeed);
         particlesRef.current.push({
-          x: 0,
-          y: Math.random() * dimensions.height,
-          vx: baseSpeed + Math.random() * 0.5,
-          vy: (Math.random() - 0.5) * 0.5,
+          x: spawnPos.x,
+          y: spawnPos.y,
+          vx: velocity.vx,
+          vy: velocity.vy,
           trail: [],
           life: 1,
         });
@@ -198,8 +259,8 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({
             
             // Find clear position
             for (let i = 1; i <= 20; i++) {
-              if (!isObstacle(escapeX - i, escapeY + escapeDir * i)) {
-                escapeX = escapeX - i;
+              if (!isObstacle(escapeX - Math.sign(p.vx) * i, escapeY + escapeDir * i)) {
+                escapeX = escapeX - Math.sign(p.vx) * i;
                 escapeY = escapeY + escapeDir * i;
                 break;
               }
@@ -207,7 +268,7 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({
             
             p.x = escapeX;
             p.y = escapeY;
-            p.vx = Math.max(baseSpeed * 0.6, p.vx * 0.7);
+            p.vx = p.vx * 0.7;
             p.vy = deflection.dvy * 0.8;
             
             collisionCount++;
@@ -223,8 +284,9 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({
         }
         
         // Gradually return to base flow
-        p.vx = p.vx * 0.99 + baseSpeed * 0.01;
-        p.vy *= 0.95;
+        const targetVel = getDirectionalVelocity(baseSpeed);
+        p.vx = p.vx * 0.99 + targetVel.vx * 0.01;
+        p.vy = p.vy * 0.95 + targetVel.vy * 0.05;
 
         // Draw trail with glow
         if (p.trail.length > 1) {
@@ -258,7 +320,7 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({
         ctx.fill();
         ctx.shadowBlur = 0;
 
-        return p.x < dimensions.width + 10 && p.y > -10 && p.y < dimensions.height + 10;
+        return !isOutOfBounds(p, dimensions.width, dimensions.height);
       });
 
       // Update metrics
@@ -273,7 +335,7 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({
     return () => {
       if (animationRef.current) cancelAnimationFrame(animationRef.current);
     };
-  }, [dimensions, windSpeed, particleCount, isObstacle, getDeflection, onMetricsUpdate]);
+  }, [dimensions, windSpeed, particleCount, isObstacle, getDeflection, onMetricsUpdate, windDirection, isRunning, getDirectionalVelocity, getSpawnPosition, isOutOfBounds]);
 
   // Drawing handlers
   const handleMouseDown = (e: React.MouseEvent) => {

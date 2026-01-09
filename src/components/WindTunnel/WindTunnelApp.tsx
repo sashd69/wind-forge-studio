@@ -4,12 +4,16 @@ import LeftSidebar from './LeftSidebar';
 import SimulationCanvas from './SimulationCanvas';
 import RightSidebar from './RightSidebar';
 
+export type WindDirection = 'left-right' | 'right-left' | 'top-bottom' | 'bottom-top';
+
 const WindTunnelApp: React.FC = () => {
   const [tool, setTool] = useState<'pen' | 'eraser'>('pen');
   const [windSpeed, setWindSpeed] = useState(50);
   const [particleCount, setParticleCount] = useState(60);
   const [lift, setLift] = useState(0);
   const [drag, setDrag] = useState(0);
+  const [windDirection, setWindDirection] = useState<WindDirection>('left-right');
+  const [isRunning, setIsRunning] = useState(true);
 
   const handleMetricsUpdate = useCallback((newLift: number, newDrag: number) => {
     setLift((prev) => prev * 0.9 + newLift * 0.1);
@@ -30,6 +34,10 @@ const WindTunnelApp: React.FC = () => {
             setWindSpeed={setWindSpeed}
             particleCount={particleCount}
             setParticleCount={setParticleCount}
+            windDirection={windDirection}
+            setWindDirection={setWindDirection}
+            isRunning={isRunning}
+            setIsRunning={setIsRunning}
           />
         </aside>
 
@@ -40,6 +48,8 @@ const WindTunnelApp: React.FC = () => {
             particleCount={particleCount}
             tool={tool}
             onMetricsUpdate={handleMetricsUpdate}
+            windDirection={windDirection}
+            isRunning={isRunning}
           />
         </main>
 
