@@ -1,8 +1,9 @@
 import React from 'react';
-import { Pencil, Eraser, Trash2, Wind, Sparkles } from 'lucide-react';
+import { Pencil, Eraser, Trash2, Wind, Sparkles, Play, Pause, ArrowRight, ArrowLeft, ArrowUp, ArrowDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { type WindDirection } from './WindTunnelApp';
 
 interface LeftSidebarProps {
   tool: 'pen' | 'eraser';
@@ -11,6 +12,10 @@ interface LeftSidebarProps {
   setWindSpeed: (speed: number) => void;
   particleCount: number;
   setParticleCount: (count: number) => void;
+  windDirection: WindDirection;
+  setWindDirection: (direction: WindDirection) => void;
+  isRunning: boolean;
+  setIsRunning: (running: boolean) => void;
 }
 
 const LeftSidebar: React.FC<LeftSidebarProps> = ({
@@ -20,6 +25,10 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
   setWindSpeed,
   particleCount,
   setParticleCount,
+  windDirection,
+  setWindDirection,
+  isRunning,
+  setIsRunning,
 }) => {
   const handlePreset = (preset: 'airfoil' | 'circle' | 'square' | 'spoiler') => {
     const canvas = (window as any).windTunnelCanvas;
@@ -38,12 +47,66 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
     if (canvas) canvas.clear();
   };
 
+  const directionOptions: { value: WindDirection; icon: React.ReactNode; label: string }[] = [
+    { value: 'left-right', icon: <ArrowRight className="w-4 h-4" />, label: 'Left → Right' },
+    { value: 'right-left', icon: <ArrowLeft className="w-4 h-4" />, label: 'Right → Left' },
+    { value: 'top-bottom', icon: <ArrowDown className="w-4 h-4" />, label: 'Top → Bottom' },
+    { value: 'bottom-top', icon: <ArrowUp className="w-4 h-4" />, label: 'Bottom → Top' },
+  ];
+
   return (
     <div className="w-[250px] h-full flex flex-col gap-4 p-4 overflow-y-auto scrollbar-thin">
       {/* Header */}
       <div className="flex items-center gap-2 mb-2">
         <Wind className="w-5 h-5 text-primary" />
         <h2 className="text-sm font-semibold uppercase tracking-wider text-foreground">Controls</h2>
+      </div>
+
+      {/* Simulation Control */}
+      <div className="sidebar-section">
+        <span className="control-label">Simulation</span>
+        <Button
+          variant={isRunning ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => setIsRunning(!isRunning)}
+          className={`w-full ${isRunning ? 'glow-cyan' : ''}`}
+        >
+          {isRunning ? (
+            <>
+              <Pause className="w-4 h-4 mr-2" />
+              Pause
+            </>
+          ) : (
+            <>
+              <Play className="w-4 h-4 mr-2" />
+              Resume
+            </>
+          )}
+        </Button>
+      </div>
+
+      {/* Wind Direction */}
+      <div className="sidebar-section">
+        <span className="control-label">Wind Direction</span>
+        <div className="grid grid-cols-2 gap-2">
+          {directionOptions.map((option) => (
+            <Tooltip key={option.value}>
+              <TooltipTrigger asChild>
+                <Button
+                  variant={windDirection === option.value ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setWindDirection(option.value)}
+                  className={`text-xs ${windDirection === option.value ? 'glow-cyan' : ''}`}
+                >
+                  {option.icon}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{option.label}</p>
+              </TooltipContent>
+            </Tooltip>
+          ))}
+        </div>
       </div>
 
       {/* Drawing Tools */}
