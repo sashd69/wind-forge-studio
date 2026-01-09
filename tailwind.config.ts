@@ -13,6 +13,10 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ['Inter', 'sans-serif'],
+        mono: ['Roboto Mono', 'monospace'],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -30,6 +34,14 @@ export default {
         destructive: {
           DEFAULT: "hsl(var(--destructive))",
           foreground: "hsl(var(--destructive-foreground))",
+        },
+        warning: {
+          DEFAULT: "hsl(var(--warning))",
+          foreground: "hsl(var(--warning-foreground))",
+        },
+        success: {
+          DEFAULT: "hsl(var(--success))",
+          foreground: "hsl(var(--success-foreground))",
         },
         muted: {
           DEFAULT: "hsl(var(--muted))",
@@ -57,6 +69,10 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        "panel-glass": "hsl(var(--panel-glass))",
+        "glow-cyan": "hsl(var(--glow-cyan))",
+        "glow-amber": "hsl(var(--glow-amber))",
+        "glow-emerald": "hsl(var(--glow-emerald))",
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -65,25 +81,32 @@ export default {
       },
       keyframes: {
         "accordion-down": {
-          from: {
-            height: "0",
-          },
-          to: {
-            height: "var(--radix-accordion-content-height)",
-          },
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
         },
         "accordion-up": {
-          from: {
-            height: "var(--radix-accordion-content-height)",
-          },
-          to: {
-            height: "0",
-          },
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
+        },
+        "pulse-glow": {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0.5" },
+        },
+        "flow-right": {
+          "0%": { transform: "translateX(-100%)" },
+          "100%": { transform: "translateX(100%)" },
+        },
+        "metric-pulse": {
+          "0%, 100%": { transform: "scale(1)" },
+          "50%": { transform: "scale(1.02)" },
         },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "pulse-glow": "pulse-glow 2s ease-in-out infinite",
+        "flow-right": "flow-right 3s linear infinite",
+        "metric-pulse": "metric-pulse 2s ease-in-out infinite",
       },
     },
   },
