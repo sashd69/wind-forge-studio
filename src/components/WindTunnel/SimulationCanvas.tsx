@@ -112,22 +112,25 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({
     return pixel[3] > 128; // Check alpha channel
   }, []);
 
-  // Get deflection direction
+  // Get deflection direction - ensure particles deflect tangentially, not vertically
   const getDeflection = useCallback((x: number, y: number, vx: number, vy: number): { dvx: number; dvy: number } => {
-    const sampleRadius = 5;
+    const sampleRadius = 8;
     let upFree = 0, downFree = 0;
     
+    // Sample more points to determine best deflection direction
     for (let i = 1; i <= sampleRadius; i++) {
       if (!isObstacle(x, y - i)) upFree++;
       if (!isObstacle(x, y + i)) downFree++;
     }
     
     const deflectUp = upFree > downFree;
-    const deflectStrength = 0.5;
+    // Use horizontal velocity to determine deflection strength - maintains forward momentum
+    const deflectStrength = Math.max(0.8, vx * 0.4);
     
     return {
-      dvx: -vx * 0.3,
-      dvy: deflectUp ? -Math.abs(vy + deflectStrength) : Math.abs(vy + deflectStrength)
+      dvx: -vx * 0.2, // Reduce horizontal slowdown
+      // Deflect based on direction but keep it proportional and horizontal-biased
+      dvy: deflectUp ? -deflectStrength : deflectStrength
     };
   }, [isObstacle]);
 
@@ -336,11 +339,11 @@ const SimulationCanvas: React.FC<SimulationCanvasProps> = ({
 
   return (
     <div ref={containerRef} className="relative w-full h-full overflow-hidden bg-background">
-      {/* Obstacle canvas (hidden, for collision detection) */}
+      {/* Obstacle canvas (visible shape) */}
       <canvas
         ref={obstacleCanvasRef}
-        className="absolute inset-0 pointer-events-none opacity-50"
-        style={{ mixBlendMode: 'screen' }}
+        className="absolute inset-0 pointer-events-none"
+        style={{ mixBlendMode: 'screen', opacity: 1 }}
       />
       {/* Particle canvas */}
       <canvas
